@@ -1,3 +1,4 @@
+import { useSignUp } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 import { useState } from "react";
@@ -18,12 +19,76 @@ import { SocialAuthButton } from "@/components/auth/SocialAuthButton";
 import { VerificationModal } from "@/components/auth/VerificationModal";
 import { images } from "@/constants/images";
 import { colors } from "@/constants/theme";
+import { useSocialAuth } from "@/hooks/useSocialAuth";
 
 export default function SignUpScreen() {
+  const { signUp } = useSignUp();
+  const { signInWithStrategy } = useSocialAuth();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [verificationVisible, setVerificationVisible] = useState(false);
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSignUp = async () => {
+    setError("");
+    setSubmitting(true);
+
+    const { error: passwordError } = await signUp.password({ emailAddress: email, password });
+    if (passwordError) {
+      setError(passwordError.longMessage ?? passwordError.message);
+      setSubmitting(false);
+      return;
+    }
+
+    const { error: sendError } = await signUp.verifications.sendEmailCode();
+    setSubmitting(false);
+    if (sendError) {
+      setError(sendError.longMessage ?? sendError.message);
+      return;
+    }
+
+    setVerificationVisible(true);
+  };
+
+  const handleVerify = async (code: string) => {
+    const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code });
+    if (verifyError) {
+      return { success: false as const, error: verifyError.longMessage ?? verifyError.message };
+    }
+
+    if (signUp.status !== "complete") {
+      return {
+        success: false as const,
+        error: "Additional information is required to finish signing up.",
+      };
+    }
+
+    const { error: finalizeError } = await signUp.finalize();
+    if (finalizeError) {
+      return {
+        success: false as const,
+        error: finalizeError.longMessage ?? finalizeError.message,
+      };
+    }
+
+    router.replace("/");
+    return { success: true as const };
+  };
+
+  const handleResend = async () => {
+    await signUp.verifications.sendEmailCode();
+  };
+
+  const handleSocial = async (strategy: Parameters<typeof signInWithStrategy>[0]) => {
+    setError("");
+    const result = await signInWithStrategy(strategy);
+    if (!result.success) {
+      setError(result.error);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.neutral.background }}>
@@ -93,9 +158,16 @@ export default function SignUpScreen() {
               />
             </View>
 
+            {error ? (
+              <Text className="mt-3 font-poppins-regular text-body-sm text-error">{error}</Text>
+            ) : null}
+
             <View className="mt-6">
-              <GradientButton title="Sign Up" onPress={() => setVerificationVisible(true)} />
+              <GradientButton title="Sign Up" onPress={handleSignUp} loading={submitting} />
             </View>
+
+            {/* Renders Clerk's bot-protection challenge on web; Clerk skips it on iOS/Android. */}
+            <View nativeID="clerk-captcha" />
 
             <View className="mt-6 flex-row items-center gap-3">
               <View className="h-px flex-1 bg-border" />
@@ -109,14 +181,17 @@ export default function SignUpScreen() {
               <SocialAuthButton
                 label="Continue with Google"
                 icon={<Ionicons name="logo-google" size={20} color="#4285F4" />}
+                onPress={() => handleSocial("oauth_google")}
               />
               <SocialAuthButton
                 label="Continue with Facebook"
                 icon={<Ionicons name="logo-facebook" size={20} color="#1877F2" />}
+                onPress={() => handleSocial("oauth_facebook")}
               />
               <SocialAuthButton
                 label="Continue with Apple"
                 icon={<Ionicons name="logo-apple" size={20} color={colors.neutral.textPrimary} />}
+                onPress={() => handleSocial("oauth_apple")}
               />
             </View>
 
@@ -136,6 +211,8 @@ export default function SignUpScreen() {
         visible={verificationVisible}
         email={email || "your email"}
         onClose={() => setVerificationVisible(false)}
+        onVerify={handleVerify}
+        onResend={handleResend}
       />
     </SafeAreaView>
   );

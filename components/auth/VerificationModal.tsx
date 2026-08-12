@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,14 +16,26 @@ import { colors } from "@/constants/theme";
 
 const CODE_LENGTH = 6;
 
+type VerifyResult = { success: true } | { success: false; error: string };
+
 type VerificationModalProps = {
   visible: boolean;
   email: string;
   onClose: () => void;
+  onVerify: (code: string) => Promise<VerifyResult>;
+  onResend?: () => void;
 };
 
-export function VerificationModal({ visible, email, onClose }: VerificationModalProps) {
+export function VerificationModal({
+  visible,
+  email,
+  onClose,
+  onVerify,
+  onResend,
+}: VerificationModalProps) {
   const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [verifying, setVerifying] = useState(false);
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -32,16 +44,26 @@ export function VerificationModal({ visible, email, onClose }: VerificationModal
     }
 
     setCode("");
+    setError("");
+    setVerifying(false);
     const focusTimeout = setTimeout(() => inputRef.current?.focus(), 300);
     return () => clearTimeout(focusTimeout);
   }, [visible]);
 
-  const handleChangeCode = (text: string) => {
+  const handleChangeCode = async (text: string) => {
     const digits = text.replace(/[^0-9]/g, "").slice(0, CODE_LENGTH);
     setCode(digits);
+    setError("");
 
     if (digits.length === CODE_LENGTH) {
-      router.replace("/");
+      setVerifying(true);
+      const result = await onVerify(digits);
+      setVerifying(false);
+
+      if (!result.success) {
+        setError(result.error);
+        setCode("");
+      }
     }
   };
 
@@ -77,7 +99,7 @@ export function VerificationModal({ visible, email, onClose }: VerificationModal
                   <View
                     key={index}
                     className={`h-14 w-12 items-center justify-center rounded-2xl border ${
-                      isActive ? "border-lingua-purple" : "border-border"
+                      error ? "border-error" : isActive ? "border-lingua-purple" : "border-border"
                     }`}
                   >
                     <Text className="font-poppins-semibold text-h3 text-text-primary">
@@ -94,9 +116,33 @@ export function VerificationModal({ visible, email, onClose }: VerificationModal
               onChangeText={handleChangeCode}
               keyboardType="number-pad"
               maxLength={CODE_LENGTH}
+              editable={!verifying}
               style={{ position: "absolute", opacity: 0, height: 1, width: 1 }}
             />
           </Pressable>
+
+          {verifying ? (
+            <View className="mt-4 flex-row items-center justify-center gap-2">
+              <ActivityIndicator color={colors.primary.linguaPurple} />
+              <Text className="font-poppins-regular text-body-sm text-text-secondary">
+                Verifying...
+              </Text>
+            </View>
+          ) : null}
+
+          {error ? (
+            <Text className="mt-4 text-center font-poppins-regular text-body-sm text-error">
+              {error}
+            </Text>
+          ) : null}
+
+          {onResend ? (
+            <TouchableOpacity className="mt-6 items-center" onPress={onResend} hitSlop={12}>
+              <Text className="font-poppins-semibold text-body-sm text-lingua-purple">
+                Resend code
+              </Text>
+            </TouchableOpacity>
+          ) : null}
         </View>
       </KeyboardAvoidingView>
     </Modal>
