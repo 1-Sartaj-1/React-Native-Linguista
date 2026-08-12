@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -10,7 +11,11 @@ export default function OnboardingScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.neutral.background }}>
       <View className="flex-1 px-6 pb-6">
         <View className="flex-row items-center justify-center gap-2 pt-2">
-          <Image source={images.mascotLogo} className="h-10 w-10" resizeMode="contain" />
+          <Image
+            source={images.mascotLogo}
+            resizeMode="contain"
+            style={{ height: 40, width: 40 }}
+          />
           <Text className="font-poppins-bold text-h2 text-text-primary">Linguista</Text>
         </View>
 
@@ -51,13 +56,18 @@ export default function OnboardingScreen() {
               <Text className="font-poppins-medium text-body-md text-[#E2574C]">你好!</Text>
             </View>
 
-            <Image source={images.mascotWelcome} className="h-64 w-64" resizeMode="contain" />
+            <Image
+              source={images.mascotWelcome}
+              resizeMode="contain"
+              style={{ height: 256, width: 256 }}
+            />
           </View>
         </View>
 
         <TouchableOpacity
           className="flex-row items-center justify-center gap-2 rounded-full bg-lingua-purple py-4"
           activeOpacity={0.85}
+          onPress={() => router.push("/sign-up")}
         >
           <Text className="font-poppins-semibold text-body-lg text-white">Get Started</Text>
           <Ionicons name="chevron-forward" size={20} color="#ffffff" />
