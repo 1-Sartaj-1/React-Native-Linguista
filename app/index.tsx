@@ -1,4 +1,6 @@
-import { ScrollView, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Link } from "expo-router";
+import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ColorSwatch } from "@/components/design-system/ColorSwatch";
@@ -104,6 +106,18 @@ export default function DesignSystemScreen() {
         contentContainerStyle={{ padding: 16, gap: 16 }}
         showsVerticalScrollIndicator={false}
       >
+        <Link href="/onboarding" asChild>
+          <TouchableOpacity
+            className="flex-row items-center justify-center gap-2 self-center rounded-full bg-lingua-purple px-5 py-3"
+            activeOpacity={0.85}
+          >
+            <Text className="font-poppins-semibold text-body-md text-white">
+              View Onboarding Screen
+            </Text>
+            <Ionicons name="arrow-forward" size={16} color="#ffffff" />
+          </TouchableOpacity>
+        </Link>
+
         <SectionCard title="BRAND">
           <View className="items-center gap-2 py-4">
             <Text style={{ fontSize: 56, lineHeight: 64 }}>🦊</Text>
