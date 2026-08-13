@@ -23,6 +23,10 @@ export const colors = {
     surface: "#F6F7FB",
     background: "#FFFFFF",
   },
+  tint: {
+    gold: "#FBEEDD",
+    mint: "#EAF3E1",
+  },
 } as const;
 
 export const fontFamily = {
