@@ -1,3 +1,4 @@
+import { getInProgressLesson } from "@/data/lessons";
 import type { LanguageCode, Unit } from "@/types/learning";
 
 export const units: Unit[] = [
@@ -51,6 +52,39 @@ export const units: Unit[] = [
     level: "A1",
     imageKey: "first-steps",
   },
+
+  // Korean
+  {
+    id: "ko-u1",
+    languageId: "ko",
+    order: 1,
+    title: "Everyday Basics",
+    description: "Greet people, order food, and get around town.",
+    level: "A1",
+    imageKey: "everyday-basics",
+  },
+
+  // German
+  {
+    id: "de-u1",
+    languageId: "de",
+    order: 1,
+    title: "Everyday Basics",
+    description: "Greet people, order food, and get around town.",
+    level: "A1",
+    imageKey: "everyday-basics",
+  },
+
+  // Chinese
+  {
+    id: "zh-u1",
+    languageId: "zh",
+    order: 1,
+    title: "Everyday Basics",
+    description: "Greet people, order food, and get around town.",
+    level: "A1",
+    imageKey: "everyday-basics",
+  },
 ];
 
 export function getUnitsByLanguageId(languageId: LanguageCode) {
@@ -61,4 +95,15 @@ export function getUnitsByLanguageId(languageId: LanguageCode) {
 
 export function getUnitById(id: string) {
   return units.find((unit) => unit.id === id);
+}
+
+// The unit the Learn screen opens on: the one holding the in-progress lesson,
+// or the first unit of the language when nothing is in progress yet.
+export function getCurrentUnit(languageId: LanguageCode): Unit | undefined {
+  const languageUnits = getUnitsByLanguageId(languageId);
+  const inProgressLesson = getInProgressLesson(languageId);
+
+  return (
+    languageUnits.find((unit) => unit.id === inProgressLesson?.unitId) ?? languageUnits[0]
+  );
 }

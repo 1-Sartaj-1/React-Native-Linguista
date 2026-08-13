@@ -87,6 +87,9 @@ export interface Lesson {
   title: string;
   status: LessonStatus;
   xpReward: number;
+  // Matches a key in `artwork` (constants/images.ts). Lessons without one fall
+  // back to a placeholder image.
+  imageKey?: string;
   goal: LessonGoal;
   vocabulary: VocabularyItem[];
   phrases: Phrase[];

@@ -1,8 +1,7 @@
 import type { Language, LanguageCode } from "@/types/learning";
 
-// Supported languages. Only "es", "fr", and "ja" have unit/lesson content so
-// far (see data/units.ts and data/lessons.ts) — the rest are listed for the
-// language selection screen and can be filled in the same way later.
+// Supported languages. Every language has at least one unit of lesson content
+// (see data/units.ts and data/lessons.ts).
 export const languages: Language[] = [
   {
     id: "es",
