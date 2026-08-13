@@ -1,6 +1,7 @@
 import { useSignIn } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useState } from "react";
 import {
   Image,
@@ -24,6 +25,7 @@ import { useSocialAuth } from "@/hooks/useSocialAuth";
 export default function SignInScreen() {
   const { signIn } = useSignIn();
   const { signInWithStrategy } = useSocialAuth();
+  const posthog = usePostHog();
 
   const [email, setEmail] = useState("");
   const [verificationVisible, setVerificationVisible] = useState(false);
@@ -33,6 +35,8 @@ export default function SignInScreen() {
   const handleContinue = async () => {
     setError("");
     setSubmitting(true);
+
+    posthog.capture('sign_in_submitted', { method: 'email' });
 
     const { error: sendError } = await signIn.emailCode.sendCode({ emailAddress: email });
     setSubmitting(false);
@@ -62,6 +66,7 @@ export default function SignInScreen() {
       };
     }
 
+    posthog.capture('sign_in_completed', { method: 'email' });
     router.replace("/");
     return { success: true as const };
   };
@@ -72,6 +77,7 @@ export default function SignInScreen() {
 
   const handleSocial = async (strategy: Parameters<typeof signInWithStrategy>[0]) => {
     setError("");
+    posthog.capture('social_auth_attempted', { strategy, screen: 'sign_in' });
     const result = await signInWithStrategy(strategy);
     if (!result.success) {
       setError(result.error);

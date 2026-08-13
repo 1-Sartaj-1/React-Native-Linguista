@@ -1,5 +1,6 @@
 import { useUser } from "@clerk/expo";
 import { router } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -28,6 +29,7 @@ type PlanKey = "lesson" | "conversation" | "words";
 export default function HomeScreen() {
   const { user } = useUser();
   const selectedLanguage = useLanguageStore((state) => state.selectedLanguage);
+  const posthog = usePostHog();
   const [doneItems, setDoneItems] = useState<Record<PlanKey, boolean>>({
     lesson: false,
     conversation: false,
@@ -39,8 +41,15 @@ export default function HomeScreen() {
   const unit = lesson ? getUnitById(lesson.unitId) : undefined;
   const conversationActivity = lesson?.activities.find((activity) => activity.type === "conversation");
 
-  const togglePlanItem = (key: PlanKey) =>
-    setDoneItems((prev) => ({ ...prev, [key]: !prev[key] }));
+  const togglePlanItem = (key: PlanKey) => {
+    const newDone = !doneItems[key];
+    posthog.capture('plan_item_toggled', {
+      item_type: key,
+      is_done: newDone,
+      language_code: selectedLanguage,
+    });
+    setDoneItems((prev) => ({ ...prev, [key]: newDone }));
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.neutral.background }}>
@@ -65,7 +74,13 @@ export default function HomeScreen() {
             <ContinueLearningCard
               languageName={language.name}
               levelLabel={unit ? `${unit.level} • Unit ${unit.order}` : lesson.title}
-              onContinue={() => router.push("/learn")}
+              onContinue={() => {
+                posthog.capture('continue_learning_tapped', {
+                  language_code: selectedLanguage,
+                  lesson_title: lesson.title,
+                });
+                router.push('/learn');
+              }}
             />
           </View>
         ) : null}
@@ -114,7 +129,10 @@ export default function HomeScreen() {
           <NextUpCard
             teacherName={lesson?.aiTeacherPrompt.teacherName ?? "your AI teacher"}
             avatarUri={NEXT_UP_AVATAR}
-            onPress={() => router.push("/ai-teacher")}
+            onPress={() => {
+              posthog.capture('ai_teacher_opened', { language_code: selectedLanguage });
+              router.push('/ai-teacher');
+            }}
           />
         </View>
       </ScrollView>

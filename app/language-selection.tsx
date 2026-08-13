@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { useState } from "react";
 import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -15,12 +16,14 @@ export default function LanguageSelectionScreen() {
   const [search, setSearch] = useState("");
   const [selectedLanguageId, setSelectedLanguageId] = useState<LanguageCode>("es");
   const setSelectedLanguage = useLanguageStore((state) => state.setSelectedLanguage);
+  const posthog = usePostHog();
 
   const filteredLanguages = popularLanguages.filter((language) =>
     language.name.toLowerCase().includes(search.trim().toLowerCase()),
   );
 
   const handleConfirm = () => {
+    posthog.capture('language_selected', { language_code: selectedLanguageId });
     setSelectedLanguage(selectedLanguageId);
     router.replace("/");
   };

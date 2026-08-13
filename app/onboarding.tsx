@@ -1,6 +1,7 @@
 import { useAuth } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, router } from "expo-router";
+import { usePostHog } from "posthog-react-native";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -9,6 +10,7 @@ import { colors } from "@/constants/theme";
 
 export default function OnboardingScreen() {
   const { isSignedIn } = useAuth();
+  const posthog = usePostHog();
 
   if (isSignedIn) {
     return <Redirect href="/" />;
@@ -74,7 +76,11 @@ export default function OnboardingScreen() {
         <TouchableOpacity
           className="flex-row items-center justify-center gap-2 rounded-full bg-lingua-purple py-4"
           activeOpacity={0.85}
-          onPress={() => router.push("/sign-up")}
+          testID="get-started-button"
+          onPress={() => {
+            posthog.capture('get_started_tapped');
+            router.push('/sign-up');
+          }}
         >
           <Text className="font-poppins-semibold text-body-lg text-white">Get Started</Text>
           <Ionicons name="chevron-forward" size={20} color="#ffffff" />
